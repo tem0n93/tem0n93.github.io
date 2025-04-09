@@ -29,11 +29,28 @@ function analyzeSmartData(data) {
     // Температура
     result.temperature = parseInt(extractValue(data, /Current Drive Temperature:\s+(\d+)/)) || "Неизвестно";
 
-    // Ошибки чтения
-    const readErrorsMatch = data.match(/read:\s+(\d+)\s+(\d+)\s+(\d+)/);
+    // Ошибки чтения/записи
+    const readErrorsMatch = data.match(/read:\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+([\d.]+)/);
     result.readErrors = readErrorsMatch
-        ? { fast: parseInt(readErrorsMatch[1]), delayed: parseInt(readErrorsMatch[2]), rewrites: parseInt(readErrorsMatch[3]) }
-        : { fast: 0, delayed: 0, rewrites: 0 };
+        ? { 
+            fast: parseInt(readErrorsMatch[1]), 
+            delayed: parseInt(readErrorsMatch[2]), 
+            rewrites: parseInt(readErrorsMatch[3]),
+            gigabytesProcessed: parseFloat(readErrorsMatch[4]),
+            uncorrectedErrors: extractValue(data, /read:.+?\s+(\d+)$/m)
+          }
+        : { fast: 0, delayed: 0, rewrites: 0, gigabytesProcessed: 0, uncorrectedErrors: 0 };
+
+    const writeErrorsMatch = data.match(/write:\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+([\d.]+)/);
+    result.writeErrors = writeErrorsMatch
+        ? { 
+            fast: parseInt(writeErrorsMatch[1]), 
+            delayed: parseInt(writeErrorsMatch[2]), 
+            rewrites: parseInt(writeErrorsMatch[3]),
+            gigabytesProcessed: parseFloat(writeErrorsMatch[4]),
+            uncorrectedErrors: extractValue(data, /write:.+?\s+(\d+)$/m)
+          }
+        : { fast: 0, delayed: 0, rewrites: 0, gigabytesProcessed: 0, uncorrectedErrors: 0 };
 
     // Перераспределённые секторы
     result.reallocatedSectors = {
@@ -68,12 +85,34 @@ function formatResults(analysis) {
         }
     }
 
-    // Ошибки чтения
-    if (analysis.readErrors.delayed > 0) {
-        output += `<p><strong>Ошибки чтения:</strong> Обнаружены задержанные ошибки чтения (${analysis.readErrors.delayed} раз).</p>`;
-    } else {
-        output += `<p><strong>Ошибки чтения:</strong> Ошибок чтения нет.</p>`;
-    }
+    // Таблица Error counter log
+    output += `<h3>Error counter log</h3>`;
+    output += `<table>
+        <tr>
+            <th>Операция</th>
+            <th>ECC Fast</th>
+            <th>Delayed</th>
+            <th>Rewrites</th>
+            <th>Гигабайты обработано</th>
+            <th>Некорректируемые ошибки</th>
+        </tr>
+        <tr>
+            <td>Чтение</td>
+            <td>${analysis.readErrors.fast}</td>
+            <td>${analysis.readErrors.delayed}</td>
+            <td>${analysis.readErrors.rewrites}</td>
+            <td>${parseFloat(analysis.readErrors.gigabytesProcessed).toFixed(3)} GB</td>
+            <td>${analysis.readErrors.uncorrectedErrors}</td>
+        </tr>
+        <tr>
+            <td>Запись</td>
+            <td>${analysis.writeErrors.fast}</td>
+            <td>${analysis.writeErrors.delayed}</td>
+            <td>${analysis.writeErrors.rewrites}</td>
+            <td>${parseFloat(analysis.writeErrors.gigabytesProcessed).toFixed(3)} GB</td>
+            <td>${analysis.writeErrors.uncorrectedErrors}</td>
+        </tr>
+    </table>`;
 
     // Перераспределённые секторы
     if (analysis.reallocatedSectors.inplace > 0 || analysis.reallocatedSectors.app > 0) {
@@ -84,7 +123,23 @@ function formatResults(analysis) {
 
     return output;
 }
+// Извлечение значения по регулярному выражению
+function extractValue(data, regex) {
+    const match = data.match(regex);
+    return match ? match[1].trim() : null;
+}
 
+// Преобразование объема в читаемый формат
+function convertCapacity(capacityStr) {
+    if (!capacityStr) return null;
+    const match = capacityStr.match(/(\d+\.\d+)\s*TB/);
+    return match ? `${parseFloat(match[1]).toFixed(1)} TB` : capacityStr;
+}
+
+// Подсчет вхождений строки
+function countOccurrences(data, regex) {
+    return (data.match(regex) || []).length;
+}
 // Вспомогательные функции
 function extractValue(data, regex) {
     const match = data.match(regex);
