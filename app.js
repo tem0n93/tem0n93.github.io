@@ -100,3 +100,20 @@ function convertCapacity(capacityStr) {
 function countOccurrences(data, regex) {
     return (data.match(regex) || []).length;
 }
+
+// Ошибки чтения/записи
+const readErrorsMatch = data.match(/read:\s+(\d+)\s+(\d+)\s+(\d+)/);
+result.readErrors = readErrorsMatch
+    ? { fast: parseInt(readErrorsMatch[1]), delayed: parseInt(readErrorsMatch[2]), rewrites: parseInt(readErrorsMatch[3]) }
+    : { fast: 0, delayed: 0, rewrites: 0 };
+
+result.readGigabytes = extractValue(data, /read:\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+([\d.]+)/) || "0";
+result.readUncorrectedErrors = extractValue(data, /read:.+?\s+(\d+)$/m) || "0";
+
+const writeErrorsMatch = data.match(/write:\s+(\d+)\s+(\d+)\s+(\d+)/);
+result.writeErrors = writeErrorsMatch
+    ? { fast: parseInt(writeErrorsMatch[1]), delayed: parseInt(writeErrorsMatch[2]), rewrites: parseInt(writeErrorsMatch[3]) }
+    : { fast: 0, delayed: 0, rewrites: 0 };
+
+result.writeGigabytes = extractValue(data, /write:\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+([\d.]+)/) || "0";
+result.writeUncorrectedErrors = extractValue(data, /write:.+?\s+(\d+)$/m) || "0";
