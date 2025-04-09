@@ -5,7 +5,7 @@ document.getElementById("smartForm").addEventListener("submit", function (event)
     const resultsDiv = document.getElementById("results");
 
     try {
-        if (!smartData) throw new Error("Пустые данные!");
+        if (!smartData) throw new Error("Пожалуйста, вставьте данные SMART.");
 
         const analysis = analyzeSmartData(smartData);
         resultsDiv.innerHTML = formatResults(analysis);
@@ -14,6 +14,7 @@ document.getElementById("smartForm").addEventListener("submit", function (event)
     }
 });
 
+// Функция анализа данных SMART
 function analyzeSmartData(data) {
     const result = {};
 
@@ -76,9 +77,20 @@ function analyzeSmartData(data) {
         app: countOccurrences(data, /Reassigned by app/)
     };
 
+    // SAS Phy Events
+    result.sasPhyEvents = {
+        invalidDwordCountPort1: extractValue(data, /Invalid DWORD count = (\d+)/m) || 0,
+        disparityErrorCountPort1: extractValue(data, /Running disparity error count = (\d+)/m) || 0,
+        lossSyncCountPort1: extractValue(data, /Loss of DWORD synchronization = (\d+)/m) || 0,
+        invalidDwordCountPort2: extractValue(data, /Invalid word count: (\d+)/m, 2) || 0,
+        disparityErrorCountPort2: extractValue(data, /Running disparity error count: (\d+)/m, 2) || 0,
+        lossSyncCountPort2: extractValue(data, /Loss of dword synchronization count: (\d+)/m, 2) || 0
+    };
+
     return result;
 }
 
+// Форматирование результатов
 function formatResults(analysis) {
     let output = "<h2>Результаты анализа:</h2>";
 
@@ -148,29 +160,22 @@ function formatResults(analysis) {
         output += `<p><strong>Перераспределённые секторы:</strong> Отсутствуют.</p>`;
     }
 
+    // SAS Phy Events
+    output += `<h3>SAS Phy Events</h3>`;
+    output += `<table>
+        <tr><th>Параметр</th><th>Значение (Port 1)</th><th>Значение (Port 2)</th></tr>
+        <tr><td>Invalid DWORD Count</td><td>${analysis.sasPhyEvents.invalidDwordCountPort1}</td><td>${analysis.sasPhyEvents.invalidDwordCountPort2}</td></tr>
+        <tr><td>Disparity Error Count</td><td>${analysis.sasPhyEvents.disparityErrorCountPort1}</td><td>${analysis.sasPhyEvents.disparityErrorCountPort2}</td></tr>
+        <tr><td>Loss of Sync Count</td><td>${analysis.sasPhyEvents.lossSyncCountPort1}</td><td>${analysis.sasPhyEvents.lossSyncCountPort2}</td></tr>
+    </table>`;
+
     return output;
 }
-// Извлечение значения по регулярному выражению
-function extractValue(data, regex) {
-    const match = data.match(regex);
-    return match ? match[1].trim() : null;
-}
 
-// Преобразование объема в читаемый формат
-function convertCapacity(capacityStr) {
-    if (!capacityStr) return null;
-    const match = capacityStr.match(/(\d+\.\d+)\s*TB/);
-    return match ? `${parseFloat(match[1]).toFixed(1)} TB` : capacityStr;
-}
-
-// Подсчет вхождений строки
-function countOccurrences(data, regex) {
-    return (data.match(regex) || []).length;
-}
 // Вспомогательные функции
-function extractValue(data, regex) {
-    const match = data.match(regex);
-    return match ? match[1].trim() : null;
+function extractValue(data, regex, port = 1) {
+    const matches = data.split("relative target port id = ").map(section => section.match(regex));
+    return matches[port - 1]?.[1].trim() || null;
 }
 
 function convertCapacity(capacityStr) {
@@ -182,20 +187,3 @@ function convertCapacity(capacityStr) {
 function countOccurrences(data, regex) {
     return (data.match(regex) || []).length;
 }
-
-// Ошибки чтения/записи
-const readErrorsMatch = data.match(/read:\s+(\d+)\s+(\d+)\s+(\d+)/);
-result.readErrors = readErrorsMatch
-    ? { fast: parseInt(readErrorsMatch[1]), delayed: parseInt(readErrorsMatch[2]), rewrites: parseInt(readErrorsMatch[3]) }
-    : { fast: 0, delayed: 0, rewrites: 0 };
-
-result.readGigabytes = extractValue(data, /read:\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+([\d.]+)/) || "0";
-result.readUncorrectedErrors = extractValue(data, /read:.+?\s+(\d+)$/m) || "0";
-
-const writeErrorsMatch = data.match(/write:\s+(\d+)\s+(\d+)\s+(\d+)/);
-result.writeErrors = writeErrorsMatch
-    ? { fast: parseInt(writeErrorsMatch[1]), delayed: parseInt(writeErrorsMatch[2]), rewrites: parseInt(writeErrorsMatch[3]) }
-    : { fast: 0, delayed: 0, rewrites: 0 };
-
-result.writeGigabytes = extractValue(data, /write:\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+([\d.]+)/) || "0";
-result.writeUncorrectedErrors = extractValue(data, /write:.+?\s+(\d+)$/m) || "0";
