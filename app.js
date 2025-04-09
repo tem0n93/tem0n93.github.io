@@ -29,6 +29,24 @@ function analyzeSmartData(data) {
     // Температура
     result.temperature = parseInt(extractValue(data, /Current Drive Temperature:\s+(\d+)/)) || "Неизвестно";
 
+    // Скорость вращения
+    result.rotationRate = extractValue(data, /Rotation Rate:\s+(\d+)\s+rpm/) || "Неизвестно";
+
+    // Интерфейс и скорость
+    result.interface = extractValue(data, /Transport protocol:\s+(.+)\s+\(.*\)/) || "Неизвестно";
+    result.linkRate = extractValue(data, /negotiated logical link rate: phy enabled;\s+(\d+)\s+Gbps/) || "Неизвестно";
+
+    // Тип подключения
+    result.connectionType = extractValue(data, /attached device type:\s+(.+)$/m) || "Неизвестно";
+
+    // Циклы включения/выключения
+    result.startStopCyclesSpecified = extractValue(data, /Specified cycle count over device lifetime:\s+(\d+)/) || "Неизвестно";
+    result.startStopCyclesActual = extractValue(data, /Accumulated start-stop cycles:\s+(\d+)/) || "Неизвестно";
+
+    // Циклы загрузки/разгрузки головок
+    result.loadUnloadCyclesSpecified = extractValue(data, /Specified load-unload count over device lifetime:\s+(\d+)/) || "Неизвестно";
+    result.loadUnloadCyclesActual = extractValue(data, /Accumulated load-unload cycles:\s+(\d+)/) || "Неизвестно";
+
     // Ошибки чтения/записи
     const readErrorsMatch = data.match(/read:\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+([\d.]+)/);
     result.readErrors = readErrorsMatch
@@ -71,6 +89,9 @@ function formatResults(analysis) {
         <tr><td>Модель</td><td>${analysis.product}</td></tr>
         <tr><td>Объем</td><td>${analysis.capacity}</td></tr>
         <tr><td>Серийный номер</td><td>${analysis.serialNumber}</td></tr>
+        <tr><td>Скорость вращения</td><td>${analysis.rotationRate} RPM</td></tr>
+        <tr><td>Интерфейс</td><td>${analysis.interface} (${analysis.linkRate} Gbps)</td></tr>
+        <tr><td>Тип подключения</td><td>${analysis.connectionType}</td></tr>
     </table>`;
 
     // Здоровье диска
@@ -84,6 +105,12 @@ function formatResults(analysis) {
             output += `<p><strong>Температура:</strong> Нормальная температура: ${analysis.temperature}°C.</p>`;
         }
     }
+
+    // Циклы включения/выключения
+    output += `<p><strong>Циклы включения/выключения:</strong> Заданный лимит: ${analysis.startStopCyclesSpecified}, Актуальное значение: ${analysis.startStopCyclesActual}</p>`;
+
+    // Циклы загрузки/разгрузки головок
+    output += `<p><strong>Циклы загрузки/разгрузки головок:</strong> Заданный лимит: ${analysis.loadUnloadCyclesSpecified}, Актуальное значение: ${analysis.loadUnloadCyclesActual}</p>`;
 
     // Таблица Error counter log
     output += `<h3>Error counter log</h3>`;
