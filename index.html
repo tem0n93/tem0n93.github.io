@@ -16,39 +16,6 @@
         </form>
         <div id="results"></div>
     </div>
-output += `<h3>Error counter log</h3>`;
-output += `<table>
-    <tr>
-        <th>Операция</th>
-        <th>ECC Fast</th>
-        <th>Delayed</th>
-        <th>Rewrites</th>
-        <th>Total Corrected</th>
-        <th>Algorithm Invocations</th>
-        <th>Гигабайты обработано</th>
-        <th>Некорректируемые ошибки</th>
-    </tr>
-    <tr>
-        <td>Чтение</td>
-        <td>${analysis.readErrors.fast}</td>
-        <td>${analysis.readErrors.delayed}</td>
-        <td>${analysis.readErrors.rewrites}</td>
-        <td>0</td>
-        <td>0</td>
-        <td>${parseFloat(analysis.readGigabytes).toFixed(3)} GB</td>
-        <td>${analysis.readUncorrectedErrors}</td>
-    </tr>
-    <tr>
-        <td>Запись</td>
-        <td>${analysis.writeErrors.fast}</td>
-        <td>${analysis.writeErrors.delayed}</td>
-        <td>${analysis.writeErrors.rewrites}</td>
-        <td>0</td>
-        <td>0</td>
-        <td>${parseFloat(analysis.writeGigabytes).toFixed(3)} GB</td>
-        <td>${analysis.writeUncorrectedErrors}</td>
-    </tr>
-</table>`;
     <script src="app.js"></script>
 </body>
 </html>
