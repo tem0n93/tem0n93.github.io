@@ -15,13 +15,17 @@ document.getElementById("smartForm").addEventListener("submit", function (event)
 function analyzeSmartData(data) {
     const result = {};
 
+    // Общая информация
+    result.vendor = data.match(/Vendor:\s+(.+)$/m)?.[1].trim() || "Неизвестно";
+    result.product = data.match(/Product:\s+(.+)$/m)?.[1].trim() || "Неизвестно";
+    result.capacity = data.match(/User Capacity:\s+(.+)$/m)?.[1].trim() || "Неизвестно";
+    result.serialNumber = data.match(/Serial number:\s+(.+)$/m)?.[1].trim() || "Неизвестно";
+
     // Здоровье диска
-    const healthMatch = data.match(/SMART Health Status:\s+(.+)$/m);
-    result.health = healthMatch ? healthMatch[1].trim() : "Неизвестно";
+    result.health = data.match(/SMART Health Status:\s+(.+)$/m)?.[1].trim() || "Неизвестно";
 
     // Температура
-    const tempMatch = data.match(/Current Drive Temperature:\s+(\d+)/);
-    result.temperature = tempMatch ? parseInt(tempMatch[1]) : "Неизвестно";
+    result.temperature = data.match(/Current Drive Temperature:\s+(\d+)/)?.[1] || "Неизвестно";
 
     // Ошибки чтения
     const readErrorsMatch = data.match(/read:\s+(\d+)\s+(\d+)\s+(\d+)/);
@@ -40,32 +44,38 @@ function analyzeSmartData(data) {
 function formatResults(analysis) {
     let output = "";
 
+    // Общая информация
+    output += `<p><strong>Вендор:</strong> ${analysis.vendor}</p>`;
+    output += `<p><strong>Модель:</strong> ${analysis.product}</p>`;
+    output += `<p><strong>Объем:</strong> ${analysis.capacity}</p>`;
+    output += `<p><strong>Серийный номер:</strong> ${analysis.serialNumber}</p>`;
+
     // Здоровье диска
     if (analysis.health === "OK") {
-        output += "<p>Диск здоров.</p>";
+        output += "<p><strong>Здоровье:</strong> Диск здоров.</p>";
     } else {
-        output += `<p style="color: red;">Критическая проблема: диск не здоров (${analysis.health}).</p>`;
+        output += `<p style="color: red;"><strong>Здоровье:</strong> Критическая проблема: диск не здоров (${analysis.health}).</p>`;
     }
 
     // Температура
     if (analysis.temperature > 60) {
-        output += `<p style="color: orange;">Температура высокая: ${analysis.temperature}°C.</p>`;
+        output += `<p style="color: orange;"><strong>Температура:</strong> Высокая температура: ${analysis.temperature}°C.</p>`;
     } else {
-        output += `<p>Температура в норме: ${analysis.temperature}°C.</p>`;
+        output += `<p><strong>Температура:</strong> Нормальная температура: ${analysis.temperature}°C.</p>`;
     }
 
     // Ошибки чтения
     if (analysis.readErrors.delayed > 0) {
-        output += `<p>Обнаружены задержанные ошибки чтения (${analysis.readErrors.delayed} раз).</p>`;
+        output += `<p><strong>Ошибки чтения:</strong> Обнаружены задержанные ошибки чтения (${analysis.readErrors.delayed} раз).</p>`;
     } else {
-        output += "<p>Ошибок чтения нет.</p>";
+        output += "<p><strong>Ошибки чтения:</strong> Ошибок чтения нет.</p>";
     }
 
     // Перераспределённые секторы
     if (analysis.reallocatedSectors.inplace > 0 || analysis.reallocatedSectors.app > 0) {
-        output += `<p>Обнаружено перераспределённых секторов через rewrite in-place: ${analysis.reallocatedSectors.inplace}, через reassignment by app: ${analysis.reallocatedSectors.app}.</p>`;
+        output += `<p><strong>Перераспределённые секторы:</strong> Через rewrite in-place: ${analysis.reallocatedSectors.inplace}, через reassignment by app: ${analysis.reallocatedSectors.app}.</p>`;
     } else {
-        output += "<p>Перераспределённых секторов нет.</p>";
+        output += "<p><strong>Перераспределённые секторы:</strong> Отсутствуют.</p>";
     }
 
     return output;
