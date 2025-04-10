@@ -15,6 +15,7 @@ document.getElementById("smartForm").addEventListener("submit", function (event)
 });
 
 // Функция анализа данных SMART
+// Функция анализа данных SMART
 function analyzeSmartData(data) {
     const result = {};
 
@@ -77,19 +78,19 @@ function analyzeSmartData(data) {
         app: countOccurrences(data, /Reassigned by app/)
     };
 
-    // SAS Phy Events
-    result.sasPhyEvents = {
-        invalidDwordCountPort1: extractValue(data, /Invalid DWORD count = (\d+)/m) || 0,
-        disparityErrorCountPort1: extractValue(data, /Running disparity error count = (\d+)/m) || 0,
-        lossSyncCountPort1: extractValue(data, /Loss of DWORD synchronization = (\d+)/m) || 0,
-        invalidDwordCountPort2: extractValue(data, /Invalid word count: (\d+)/m, 2) || 0,
-        disparityErrorCountPort2: extractValue(data, /Running disparity error count: (\d+)/m, 2) || 0,
-        lossSyncCountPort2: extractValue(data, /Loss of dword synchronization count: (\d+)/m, 2) || 0
+    // Результаты фонового сканирования
+    result.backgroundScan = {
+        status: extractValue(data, /Status:\s+(.+)$/m) || "Неизвестно",
+        powerOnTime: extractValue(data, /Accumulated power on time,\s+hours:minutes\s+(\d+):(\d+)/) || "Неизвестно",
+        scansPerformed: extractValue(data, /Number of background scans performed:\s+(\d+)/) || "Неизвестно",
+        mediumScansPerformed: extractValue(data, /Number of background medium scans performed:\s+(\d+)/) || "Неизвестно",
+        scanProgress: extractValue(data, /scan progress:\s+(\d+.\d+)%/) || "Неизвестно"
     };
 
     return result;
 }
 
+// Форматирование результатов
 // Форматирование результатов
 function formatResults(analysis) {
     let output = "<h2>Результаты анализа:</h2>";
@@ -160,13 +161,15 @@ function formatResults(analysis) {
         output += `<p><strong>Перераспределённые секторы:</strong> Отсутствуют.</p>`;
     }
 
-    // SAS Phy Events
-    output += `<h3>SAS Phy Events</h3>`;
+    // Результаты фонового сканирования
+    output += `<h3>Фоновое сканирование</h3>`;
     output += `<table>
-        <tr><th>Параметр</th><th>Значение (Port 1)</th><th>Значение (Port 2)</th></tr>
-        <tr><td>Invalid DWORD Count</td><td>${analysis.sasPhyEvents.invalidDwordCountPort1}</td><td>${analysis.sasPhyEvents.invalidDwordCountPort2}</td></tr>
-        <tr><td>Disparity Error Count</td><td>${analysis.sasPhyEvents.disparityErrorCountPort1}</td><td>${analysis.sasPhyEvents.disparityErrorCountPort2}</td></tr>
-        <tr><td>Loss of Sync Count</td><td>${analysis.sasPhyEvents.lossSyncCountPort1}</td><td>${analysis.sasPhyEvents.lossSyncCountPort2}</td></tr>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Статус</td><td>${analysis.backgroundScan.status}</td></tr>
+        <tr><td>Накопленное время работы</td><td>${analysis.backgroundScan.powerOnTime} часов</td></tr>
+        <tr><td>Количество выполненных сканирований</td><td>${analysis.backgroundScan.scansPerformed}</td></tr>
+        <tr><td>Количество выполненных сканирований поверхности</td><td>${analysis.backgroundScan.mediumScansPerformed}</td></tr>
+        <tr><td>Прогресс последнего сканирования</td><td>${analysis.backgroundScan.scanProgress}%</td></tr>
     </table>`;
 
     return output;
