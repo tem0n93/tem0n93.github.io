@@ -154,6 +154,7 @@ function formatBackgroundScan(analysis) {
         <tr><td>Прогресс последнего сканирования</td><td>${analysis.backgroundScan.scanProgress}%</td></tr>
     </table>`;
 }
+
 // Форматирование журнала SAS SSP
 function formatSasSspLog(analysis) {
     return `<table>
