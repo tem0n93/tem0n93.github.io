@@ -15,7 +15,6 @@ document.getElementById("smartForm").addEventListener("submit", function (event)
 });
 
 // Функция анализа данных SMART
-// Функция анализа данных SMART
 function analyzeSmartData(data) {
     const result = {};
 
@@ -106,7 +105,6 @@ function analyzeSmartData(data) {
     return result;
 }
 
-// Форматирование результатов
 // Форматирование результатов
 function formatResults(analysis) {
     let output = "<h2>Результаты анализа:</h2>";
@@ -202,9 +200,9 @@ function formatResults(analysis) {
 }
 
 // Вспомогательные функции
-function extractValue(data, regex, port = 1) {
-    const matches = data.split("relative target port id = ").map(section => section.match(regex));
-    return matches[port - 1]?.[1].trim() || null;
+function extractValue(data, regex) {
+    const match = data.match(regex);
+    return match ? match[1].trim() : null;
 }
 
 function convertCapacity(capacityStr) {
