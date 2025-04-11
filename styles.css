@@ -1,98 +1,135 @@
+/* Общие стили */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f9f9f9;
+    background-color: #f8f9fa;
+    color: #212529;
 }
 
 .container {
-    max-width: 800px;
-    margin: 50px auto;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
     text-align: center;
-    color: #333;
+    margin-bottom: 20px;
+    color: #343a40;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
 }
 
 textarea {
     width: 100%;
-    height: 150px;
-    margin-bottom: 10px;
     padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ccc;
+    border: 1px solid #ced4da;
     border-radius: 4px;
+    font-size: 14px;
+    resize: vertical;
 }
 
 button {
     padding: 10px 20px;
     font-size: 16px;
-    color: #fff;
-    background-color: #007BFF;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-button:hover {
-    background-color: #0056b3;
+button.btn-primary {
+    background-color: #0d6efd;
+    color: white;
 }
 
-#results {
-    margin-top: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f9f9f9;
+button.btn-primary:hover {
+    background-color: #0b5ed7;
 }
 
+button.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+button.btn-secondary:hover {
+    background-color: #5c636a;
+}
+
+/* Таблицы */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
-}
-
-table, th, td {
-    border: 1px solid #ddd;
+    margin-bottom: 20px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 th, td {
-    padding: 8px;
+    padding: 10px;
     text-align: left;
+    border: 1px solid #dee2e6;
 }
 
 th {
-    background-color: #f4f4f4;
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #343a40;
 }
 
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+/* Вкладки */
+.nav-tabs {
+    margin-bottom: 20px;
+}
+
+.nav-link {
+    color: #495057;
+    border: 1px solid transparent;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.nav-link.active {
+    color: #0d6efd;
+    background-color: white;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+/* График */
+canvas {
+    max-width: 600px;
+    margin: 20px auto;
+    display: block;
+}
+
+/* Уведомления */
 .error {
-    color: red;
+    color: #dc3545;
+    font-weight: bold;
 }
 
 .warning {
-    color: orange;
+    color: #ffc107;
+    font-weight: bold;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-table, th, td {
-    border: 1px solid #ddd;
-}
-
-th, td {
-    padding: 8px;
-    text-align: left;
-}
-
-th {
-    background-color: #f4f4f4;
+/* Кнопка экспорта */
+#exportButton {
+    display: none;
+    margin-bottom: 20px;
 }
