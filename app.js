@@ -142,6 +142,11 @@ function analyzeErrorTrends(analysis) {
 
     return trendMessage;
 }
+// Функция для извлечения значения по регулярному выражению
+function extractValue(data, regex) {
+    const match = data.match(regex);
+    return match ? match[1].trim() : null;
+}
 
 // Проверка проблем
 function checkIssues(analysis) {
