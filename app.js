@@ -125,7 +125,7 @@ function formatErrors(analysis) {
             <td>${analysis.readErrors.fast}</td>
             <td>${analysis.readErrors.delayed}</td>
             <td>${analysis.readErrors.rewrites}</td>
-            <td>${parseFloat(analysis.readErrors.gigabytesProcessed).toFixed(3)} GB (${(analysis.readErrors.gigabytesProcessed / 1000).toFixed(3)} TB)</td>
+            <td>${formatGigabytesToTerabytes(analysis.readErrors.gigabytesProcessed)}</td>
             <td>${analysis.readErrors.uncorrectedErrors}</td>
         </tr>
         <tr>
@@ -133,7 +133,7 @@ function formatErrors(analysis) {
             <td>${analysis.writeErrors.fast}</td>
             <td>${analysis.writeErrors.delayed}</td>
             <td>${analysis.writeErrors.rewrites}</td>
-            <td>${parseFloat(analysis.writeErrors.gigabytesProcessed).toFixed(3)} GB (${(analysis.writeErrors.gigabytesProcessed / 1000).toFixed(3)} TB)</td>
+            <td>${formatGigabytesToTerabytes(analysis.writeErrors.gigabytesProcessed)}</td>
             <td>${analysis.writeErrors.uncorrectedErrors}</td>
         </tr>
     </table>`;
@@ -142,19 +142,35 @@ function formatErrors(analysis) {
 // Форматирование фонового сканирования
 function formatBackgroundScan(analysis) {
     const powerOnTime = analysis.backgroundScan.powerOnTime;
-    const [hours, minutes] = powerOnTime.split(":").map(Number);
-    const totalHours = hours + minutes / 60;
-    const days = (totalHours / 24).toFixed(2);
+    const formattedTime = convertHoursToDays(powerOnTime);
 
     return `<table>
         <tr><th>Параметр</th><th>Значение</th></tr>
         <tr><td>Статус</td><td>${analysis.backgroundScan.status}</td></tr>
-        <tr><td>Накопленное время работы</td><td>${powerOnTime} часов (${days} дней)</td></tr>
+        <tr><td>Накопленное время работы</td><td>${formattedTime}</td></tr>
         <tr><td>Количество выполненных сканирований</td><td>${analysis.backgroundScan.scansPerformed}</td></tr>
         <tr><td>Прогресс последнего сканирования</td><td>${analysis.backgroundScan.scanProgress}%</td></tr>
     </table>`;
 }
 
+// Функция для перевода гигабайтов в терабайты
+function formatGigabytesToTerabytes(gigabytes) {
+    const terabytes = gigabytes / 1000;
+    return `${gigabytes.toFixed(3)} GB (${terabytes.toFixed(3)} TB)`;
+}
+
+// Функция для перевода часов в дни
+function convertHoursToDays(timeString) {
+    if (!timeString) return "Неизвестно";
+
+    const [hours, minutes] = timeString.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return "Неизвестно";
+
+    const totalHours = hours + minutes / 60;
+    const days = totalHours / 24;
+
+    return `${timeString} часов (${days.toFixed(2)} дней)`;
+}
 // Форматирование журнала SAS SSP
 function formatSasSspLog(analysis) {
     return `<table>
