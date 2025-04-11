@@ -1,3 +1,9 @@
+// Функция для извлечения значения по регулярному выражению
+function extractValue(data, regex) {
+    const match = data.match(regex);
+    return match ? match[1].trim() : null;
+}
+
 document.getElementById("smartForm").addEventListener("submit", function (event) {
     event.preventDefault(); // Предотвращаем отправку формы
 
@@ -142,11 +148,6 @@ function analyzeErrorTrends(analysis) {
 
     return trendMessage;
 }
-// Функция для извлечения значения по регулярному выражению
-function extractValue(data, regex) {
-    const match = data.match(regex);
-    return match ? match[1].trim() : null;
-}
 
 // Проверка проблем
 function checkIssues(analysis) {
@@ -169,4 +170,70 @@ function checkIssues(analysis) {
     }
 
     return "";
+}
+
+// Функция для перевода гигабайтов в терабайты
+function formatGigabytesToTerabytes(gigabytes) {
+    const terabytes = gigabytes / 1000;
+    return `${gigabytes.toFixed(3)} GB (${terabytes.toFixed(3)} TB)`;
+}
+
+// Функция для перевода часов в дни
+function convertHoursToDays(timeString) {
+    if (!timeString) return "Неизвестно";
+
+    const [hours, minutes] = timeString.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return "Неизвестно";
+
+    const totalHours = hours + minutes / 60;
+    const days = totalHours / 24;
+
+    return `${timeString} часов (${days.toFixed(2)} дней)`;
+}
+
+// Экспорт результатов в JSON
+function exportResults(analysis) {
+    const jsonString = JSON.stringify(analysis, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "smart_analysis.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// График температуры
+function createTemperatureChart(temperature) {
+    const ctx = document.getElementById("temperatureChart").getContext("2d");
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["Текущая температура"],
+            datasets: [{
+                label: "Температура (°C)",
+                data: [temperature],
+                backgroundColor: temperature > 60 ? "orange" : "green",
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+
+// Вспомогательные функции
+function convertCapacity(capacityStr) {
+    if (!capacityStr) return null;
+    const match = capacityStr.match(/([\d,.]+)\s*TB/);
+    return match ? `${parseFloat(match[1]).toFixed(1)} TB` : capacityStr;
+}
+
+function countOccurrences(data, regex) {
+    return (data.match(new RegExp(regex, "g")) || []).length;
 }
