@@ -134,61 +134,59 @@ function formatGeneralInfo(analysis) {
     return output;
 }
 
-// Анализ трендов ошибок чтения/записи
-function analyzeErrorTrends(analysis) {
-    const totalReadErrors = analysis.readErrors.fast + analysis.readErrors.delayed;
-    const totalWriteErrors = analysis.writeErrors.fast + analysis.writeErrors.delayed;
-
-    let trendMessage = "";
-    if (totalReadErrors > 100 || totalWriteErrors > 100) {
-        trendMessage = "<p class='warning'>Высокий уровень ошибок чтения/записи. Возможна деградация носителя.</p>";
-    } else {
-        trendMessage = "<p>Уровень ошибок чтения/записи в норме.</p>";
-    }
-
-    return trendMessage;
+// Форматирование ошибок чтения/записи
+function formatErrors(analysis) {
+    return `<table>
+        <tr>
+            <th>Операция</th>
+            <th>ECC Fast</th>
+            <th>Delayed</th>
+            <th>Rewrites</th>
+            <th>Гигабайты обработано (ТБ)</th>
+            <th>Некорректируемые ошибки</th>
+        </tr>
+        <tr>
+            <td>Чтение</td>
+            <td>${analysis.readErrors.fast}</td>
+            <td>${analysis.readErrors.delayed}</td>
+            <td>${analysis.readErrors.rewrites}</td>
+            <td>${formatGigabytesToTerabytes(analysis.readErrors.gigabytesProcessed)}</td>
+            <td>${analysis.readErrors.uncorrectedErrors}</td>
+        </tr>
+        <tr>
+            <td>Запись</td>
+            <td>${analysis.writeErrors.fast}</td>
+            <td>${analysis.writeErrors.delayed}</td>
+            <td>${analysis.writeErrors.rewrites}</td>
+            <td>${formatGigabytesToTerabytes(analysis.writeErrors.gigabytesProcessed)}</td>
+            <td>${analysis.writeErrors.uncorrectedErrors}</td>
+        </tr>
+    </table>`;
 }
 
-// Проверка проблем
-function checkIssues(analysis) {
-    let issues = [];
+// Форматирование фонового сканирования
+function formatBackgroundScan(analysis) {
+    const powerOnTime = analysis.backgroundScan.powerOnTime;
+    const formattedTime = convertHoursToDays(powerOnTime);
 
-    if (analysis.temperature > 60) {
-        issues.push("Высокая температура диска.");
-    }
-
-    if (analysis.pendingSectors > 0) {
-        issues.push("Обнаружены ожидающие перераспределения сектора.");
-    }
-
-    if (analysis.offlineUncorrectableSectors > 0) {
-        issues.push("Обнаружены неисправимые сектора в автономном режиме.");
-    }
-
-    if (issues.length > 0) {
-        return `<p class="warning">Обнаружены проблемы:<br>${issues.join("<br>")}</p>`;
-    }
-
-    return "";
+    return `<table>
+        <tr><th>Параметр</th><th>Значение</th></tr>
+        <tr><td>Статус</td><td>${analysis.backgroundScan.status}</td></tr>
+        <tr><td>Накопленное время работы</td><td>${formattedTime}</td></tr>
+        <tr><td>Количество выполненных сканирований</td><td>${analysis.backgroundScan.scansPerformed}</td></tr>
+        <tr><td>Прогресс последнего сканирования</td><td>${analysis.backgroundScan.scanProgress}%</td></tr>
+    </table>`;
 }
 
-// Функция для перевода гигабайтов в терабайты
-function formatGigabytesToTerabytes(gigabytes) {
-    const terabytes = gigabytes / 1000;
-    return `${gigabytes.toFixed(3)} GB (${terabytes.toFixed(3)} TB)`;
-}
-
-// Функция для перевода часов в дни
-function convertHoursToDays(timeString) {
-    if (!timeString) return "Неизвестно";
-
-    const [hours, minutes] = timeString.split(":").map(Number);
-    if (isNaN(hours) || isNaN(minutes)) return "Неизвестно";
-
-    const totalHours = hours + minutes / 60;
-    const days = totalHours / 24;
-
-    return `${timeString} часов (${days.toFixed(2)} дней)`;
+// Форматирование журнала SAS SSP
+function formatSasSspLog(analysis) {
+    return `<table>
+        <tr><th>Параметр</th><th>Значение (Port 1)</th><th>Значение (Port 2)</th></tr>
+        <tr><td>Invalid DWORD Count</td><td>${analysis.sasSspLog.port1.invalidDwordCount}</td><td>${analysis.sasSspLog.port2.invalidDwordCount}</td></tr>
+        <tr><td>Disparity Error Count</td><td>${analysis.sasSspLog.port1.disparityErrorCount}</td><td>${analysis.sasSspLog.port2.disparityErrorCount}</td></tr>
+        <tr><td>Loss of Sync Count</td><td>${analysis.sasSspLog.port1.lossSyncCount}</td><td>${analysis.sasSspLog.port2.lossSyncCount}</td></tr>
+        <tr><td>Phy Reset Problem Count</td><td>${analysis.sasSspLog.port1.phyResetProblemCount}</td><td>${analysis.sasSspLog.port2.phyResetProblemCount}</td></tr>
+    </table>`;
 }
 
 // Экспорт результатов в JSON
@@ -227,6 +225,29 @@ function createTemperatureChart(temperature) {
     });
 }
 
+// Проверка проблем
+function checkIssues(analysis) {
+    let issues = [];
+
+    if (analysis.temperature > 60) {
+        issues.push("Высокая температура диска.");
+    }
+
+    if (analysis.pendingSectors > 0) {
+        issues.push("Обнаружены ожидающие перераспределения сектора.");
+    }
+
+    if (analysis.offlineUncorrectableSectors > 0) {
+        issues.push("Обнаружены неисправимые сектора в автономном режиме.");
+    }
+
+    if (issues.length > 0) {
+        return `<p class="warning">Обнаружены проблемы:<br>${issues.join("<br>")}</p>`;
+    }
+
+    return "";
+}
+
 // Вспомогательные функции
 function convertCapacity(capacityStr) {
     if (!capacityStr) return null;
@@ -236,4 +257,21 @@ function convertCapacity(capacityStr) {
 
 function countOccurrences(data, regex) {
     return (data.match(new RegExp(regex, "g")) || []).length;
+}
+
+function formatGigabytesToTerabytes(gigabytes) {
+    const terabytes = gigabytes / 1000;
+    return `${gigabytes.toFixed(3)} GB (${terabytes.toFixed(3)} TB)`;
+}
+
+function convertHoursToDays(timeString) {
+    if (!timeString) return "Неизвестно";
+
+    const [hours, minutes] = timeString.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return "Неизвестно";
+
+    const totalHours = hours + minutes / 60;
+    const days = totalHours / 24;
+
+    return `${timeString} часов (${days.toFixed(2)} дней)`;
 }
