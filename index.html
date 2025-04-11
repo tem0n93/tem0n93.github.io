@@ -1,21 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMART Data Analyzer</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIOS Version Parser</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    h1 {
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+    }
+    .error {
+      color: red;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Анализатор данных SMART</h1>
-        <form id="smartForm">
-            <label for="smartData">Загрузите данные SMART:</label><br>
-            <textarea id="smartData" rows="15" cols="80" placeholder="Вставьте данные SMART здесь..."></textarea><br>
-            <button type="submit">Проанализировать</button>
-        </form>
-        <div id="results"></div>
-    </div>
-    <script src="app.js"></script>
+  <div class="container">
+    <h1>BIOS Version Parser</h1>
+    <label for="hexInput">Введите HEX строку:</label>
+    <textarea id="hexInput" placeholder="Пример: 44 65 6c 69 76 30 35 32"></textarea>
+    <button onclick="parseHex()">Расшифровать</button>
+    <div id="output" class="result"></div>
+  </div>
+
+  <script>
+    function parseHex() {
+      const hexInput = document.getElementById('hexInput').value.trim();
+      const outputDiv = document.getElementById('output');
+      outputDiv.innerHTML = ''; // Очистка предыдущего результата
+
+      try {
+        // Разбиваем строку на массив HEX значений
+        const hexArray = hexInput.split(' ').filter(item => item.length > 0);
+
+        // Проверяем, что все значения являются корректными HEX
+        if (!hexArray.every(hex => /^[0-9a-fA-F]{2}$/.test(hex))) {
+          throw new Error('Некорректный формат HEX строки. Пожалуйста, введите значения в формате "XX XX XX ...".');
+        }
+
+        // Преобразуем HEX в ASCII символы
+        const asciiResult = hexArray.map(hex => String.fromCharCode(parseInt(hex, 16))).join('');
+
+        // Выводим результат
+        outputDiv.innerHTML = `<strong>Результат:</strong> ${asciiResult}`;
+      } catch (error) {
+        outputDiv.innerHTML = `<span class="error">${error.message}</span>`;
+      }
+    }
+  </script>
 </body>
 </html>
