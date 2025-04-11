@@ -1,32 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMART Data Analysis</title>
+    <title>Анализ SMART-данных</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .error { color: red; }
-        .warning { color: orange; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-        th, td { border: 1px solid black; padding: 8px; text-align: left; }
-        canvas { max-width: 600px; margin: 20px auto; }
+        /* Стили для таблиц */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+
+        /* Стили для графика */
+        canvas {
+            max-width: 600px;
+            margin: 20px auto;
+            display: block;
+        }
+
+        /* Стили для ошибок и предупреждений */
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+
+        /* Стили для кнопки экспорта */
+        #exportButton {
+            display: none;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="mt-4">Анализ SMART-данных</h1>
+        <h1 class="mt-4 text-center">Анализ SMART-данных</h1>
         <form id="smartForm" class="mb-4">
-            <label for="smartData">Вставьте данные SMART:</label><br>
-            <textarea id="smartData" rows="10" cols="80"></textarea><br><br>
+            <div class="mb-3">
+                <label for="smartData" class="form-label">Вставьте данные SMART:</label>
+                <textarea id="smartData" rows="10" class="form-control" placeholder="Вставьте данные SMART здесь..."></textarea>
+            </div>
             <button type="submit" class="btn btn-primary">Анализировать</button>
         </form>
 
-        <button id="exportButton" class="btn btn-secondary mb-3" style="display: none;">Скачать отчет</button>
+        <!-- Кнопка для скачивания отчета -->
+        <button id="exportButton" class="btn btn-secondary">Скачать отчет</button>
 
+        <!-- Вкладки для результатов -->
         <ul class="nav nav-tabs" id="resultsTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">Общая информация</button>
@@ -41,6 +71,8 @@
                 <button class="nav-link" id="sas-tab" data-bs-toggle="tab" data-bs-target="#sas" type="button" role="tab">Журнал SAS SSP</button>
             </li>
         </ul>
+
+        <!-- Содержимое вкладок -->
         <div class="tab-content" id="resultsTabsContent">
             <div class="tab-pane fade show active" id="general" role="tabpanel"></div>
             <div class="tab-pane fade" id="errors" role="tabpanel"></div>
@@ -48,6 +80,7 @@
             <div class="tab-pane fade" id="sas" role="tabpanel"></div>
         </div>
 
+        <!-- График температуры -->
         <canvas id="temperatureChart"></canvas>
     </div>
 
