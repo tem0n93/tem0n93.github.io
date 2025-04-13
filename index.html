@@ -89,18 +89,27 @@
             color: green;
             font-weight: bold;
         }
+
+        /* Графики */
+        .chart-container {
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
     </style>
+    <!-- Подключение Chart.js для графиков -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>Анализатор данных SMART</h1>
-        <!-- Форма для ввода данных -->
         <form id="smartForm">
             <label for="smartData">Загрузите данные SMART:</label><br>
             <textarea id="smartData" rows="15" cols="80" placeholder="Вставьте данные SMART здесь..."></textarea><br>
             <button type="submit">Проанализировать</button>
         </form>
-        <!-- Блок для вывода результатов -->
         <div id="results"></div>
     </div>
     <!-- Подключение JavaScript-файла -->
