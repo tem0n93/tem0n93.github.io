@@ -1,17 +1,23 @@
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("smartForm").addEventListener("submit", function (event) {
+    document.getElementById("smartForm")?.addEventListener("submit", function (event) {
         event.preventDefault(); // Предотвращаем отправку формы
-        const smartData = document.getElementById("smartData").value.trim();
+        const smartData = document.getElementById("smartData")?.value?.trim();
         const resultsDiv = document.getElementById("results");
+
+        if (!resultsDiv) {
+            console.error("Элемент с ID 'results' не найден.");
+            return;
+        }
 
         try {
             if (!smartData) throw new Error("Пожалуйста, вставьте данные SMART.");
             const analysis = analyzeSmartData(smartData);
-            resultsDiv.innerHTML = formatResultsWithChart(analysis);
+            resultsDiv.innerHTML = formatResults(analysis);
         } catch (error) {
             resultsDiv.innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
         }
     });
+});
 
     // Функция анализа данных SMART
 function analyzeSmartData(data) {
