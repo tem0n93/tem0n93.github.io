@@ -4,15 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Анализатор данных SMART</title>
-    <!-- Подключение внешних стилей -->
     <style>
         /* Общие стили */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
             font-family: Arial, sans-serif;
             background-color: #f9fafb;
@@ -60,8 +53,37 @@
             background-color: #0056b3;
         }
 
-        #results {
-            margin-top: 20px;
+        /* Вкладки */
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background-color: #eaeaea;
+            color: #333;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tab.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         /* Карточки */
@@ -106,7 +128,6 @@
             max-width: 100%;
         }
     </style>
-    <!-- Подключение Chart.js для графиков -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -117,9 +138,27 @@
             <textarea id="smartData" rows="15" cols="80" placeholder="Вставьте данные SMART здесь..."></textarea><br>
             <button type="submit">Проанализировать</button>
         </form>
-        <div id="results"></div>
+        <div id="results">
+            <div class="tabs" id="tabs">
+                <!-- Вкладки будут добавлены динамически -->
+            </div>
+            <div class="tab-content active" id="general-info">
+                <!-- Содержимое вкладки "Общая информация" -->
+            </div>
+            <div class="tab-content" id="disk-health">
+                <!-- Содержимое вкладки "Здоровье диска" -->
+            </div>
+            <div class="tab-content" id="error-log">
+                <!-- Содержимое вкладки "Ошибки чтения/записи" -->
+            </div>
+            <div class="tab-content" id="background-scan">
+                <!-- Содержимое вкладки "Фоновое сканирование" -->
+            </div>
+            <div class="tab-content" id="sas-log">
+                <!-- Содержимое вкладки "Журнал SAS SSP" -->
+            </div>
+        </div>
     </div>
-    <!-- Подключение JavaScript-файла -->
     <script src="app.js"></script>
 </body>
 </html>
