@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Анализатор данных SMART</title>
     <style>
-        /* Стили для улучшения внешнего вида */
+        /* Общие стили */
         body {
             font-family: Arial, sans-serif;
             background-color: #f9fafb;
@@ -57,6 +57,7 @@
             margin-top: 20px;
         }
 
+        /* Таблицы */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -73,6 +74,7 @@
             background-color: #f4f4f4;
         }
 
+        /* Цветовая маркировка */
         .error {
             color: red;
             font-weight: bold;
@@ -92,14 +94,16 @@
 <body>
     <div class="container">
         <h1>Анализатор данных SMART</h1>
+        <!-- Форма для ввода данных -->
         <form id="smartForm">
             <label for="smartData">Загрузите данные SMART:</label><br>
             <textarea id="smartData" rows="15" cols="80" placeholder="Вставьте данные SMART здесь..."></textarea><br>
             <button type="submit">Проанализировать</button>
         </form>
+        <!-- Блок для вывода результатов -->
         <div id="results"></div>
     </div>
-    <!-- Подключение JavaScript -->
+    <!-- Подключение JavaScript-файла -->
     <script src="app.js"></script>
 </body>
 </html>
