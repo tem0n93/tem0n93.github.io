@@ -1,10 +1,28 @@
 import React, { useState } from "react";
-import "./App.css"; // Подключение стилей
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  Tab,
+  Grid,
+} from "@mui/material";
+import { Chart as ChartJS } from "chart.js/auto";
+import { Bar } from "react-chartjs-2";
 
 function App() {
   const [smartData, setSmartData] = useState(""); // Данные SMART из текстового поля
   const [results, setResults] = useState(null); // Результаты анализа
   const [error, setError] = useState(null); // Ошибки анализа
+  const [activeTab, setActiveTab] = useState(0); // Активная вкладка
 
   // Функция анализа данных SMART
   function analyzeSmartData(data) {
@@ -95,192 +113,209 @@ function App() {
 
   // Форматирование результатов
   function formatResults(analysis) {
-    let output = [];
+    const tabsContent = [
+      {
+        label: "Общая информация",
+        content: (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Параметр</TableCell>
+                  <TableCell>Значение</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Вендор</TableCell>
+                  <TableCell>{analysis.vendor}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Модель</TableCell>
+                  <TableCell>{analysis.product}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Объем</TableCell>
+                  <TableCell>{analysis.capacity}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Серийный номер</TableCell>
+                  <TableCell>{analysis.serialNumber}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Скорость вращения</TableCell>
+                  <TableCell>{`${analysis.rotationRate} RPM`}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Интерфейс</TableCell>
+                  <TableCell>{`${analysis.interface} (${analysis.linkRate} Gbps)`}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ),
+      },
+      {
+        label: "Здоровье диска",
+        content: (
+          <Box>
+            <Typography variant="body1" color={analysis.health !== "OK" ? "error" : "success"}>
+              <strong>Здоровье:</strong>{" "}
+              {analysis.health === "OK"
+                ? "Диск здоров."
+                : `Критическая проблема: диск не здоров (${analysis.health}).`}
+            </Typography>
+            <Typography variant="body1" color={typeof analysis.temperature === "number" && analysis.temperature > 60 ? "warning" : ""}>
+              <strong>Температура:</strong>{" "}
+              {typeof analysis.temperature === "number" && analysis.temperature > 60
+                ? `Высокая температура: ${analysis.temperature}°C.`
+                : `Нормальная температура: ${analysis.temperature}°C.`}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        label: "Ошибки чтения/записи",
+        content: (
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Операция</TableCell>
+                      <TableCell>ECC Fast</TableCell>
+                      <TableCell>Delayed</TableCell>
+                      <TableCell>Rewrites</TableCell>
+                      <TableCell>Гигабайты обработано</TableCell>
+                      <TableCell>Некорректируемые ошибки</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>Чтение</TableCell>
+                      <TableCell>{analysis.readErrors.fast}</TableCell>
+                      <TableCell>{analysis.readErrors.delayed}</TableCell>
+                      <TableCell>{analysis.readErrors.rewrites}</TableCell>
+                      <TableCell>{parseFloat(analysis.readErrors.gigabytesProcessed).toFixed(3)} GB</TableCell>
+                      <TableCell>{analysis.readErrors.uncorrectedErrors}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Запись</TableCell>
+                      <TableCell>{analysis.writeErrors.fast}</TableCell>
+                      <TableCell>{analysis.writeErrors.delayed}</TableCell>
+                      <TableCell>{analysis.writeErrors.rewrites}</TableCell>
+                      <TableCell>{parseFloat(analysis.writeErrors.gigabytesProcessed).toFixed(3)} GB</TableCell>
+                      <TableCell>{analysis.writeErrors.uncorrectedErrors}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+            <Grid item xs={12}>
+              <Bar
+                data={{
+                  labels: ["ECC Fast", "Delayed", "Rewrites"],
+                  datasets: [
+                    {
+                      label: "Чтение",
+                      data: [analysis.readErrors.fast, analysis.readErrors.delayed, analysis.readErrors.rewrites],
+                      backgroundColor: "rgba(75, 192, 192, 0.6)",
+                    },
+                    {
+                      label: "Запись",
+                      data: [analysis.writeErrors.fast, analysis.writeErrors.delayed, analysis.writeErrors.rewrites],
+                      backgroundColor: "rgba(255, 99, 132, 0.6)",
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      position: "top",
+                    },
+                  },
+                }}
+              />
+            </Grid>
+          </Grid>
+        ),
+      },
+      {
+        label: "Фоновое сканирование",
+        content: (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Параметр</TableCell>
+                  <TableCell>Значение</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Статус</TableCell>
+                  <TableCell>{analysis.backgroundScan.status}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Накопленное время работы</TableCell>
+                  <TableCell>{analysis.backgroundScan.powerOnTime} часов</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Количество выполненных сканирований</TableCell>
+                  <TableCell>{analysis.backgroundScan.scansPerformed}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Прогресс последнего сканирования</TableCell>
+                  <TableCell>{analysis.backgroundScan.scanProgress}%</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ),
+      },
+      {
+        label: "Журнал SAS SSP",
+        content: (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Параметр</TableCell>
+                  <TableCell>Значение (Port 1)</TableCell>
+                  <TableCell>Значение (Port 2)</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Invalid DWORD Count</TableCell>
+                  <TableCell>{analysis.sasSspLog.port1.invalidDwordCount}</TableCell>
+                  <TableCell>{analysis.sasSspLog.port2.invalidDwordCount}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Disparity Error Count</TableCell>
+                  <TableCell>{analysis.sasSspLog.port1.disparityErrorCount}</TableCell>
+                  <TableCell>{analysis.sasSspLog.port2.disparityErrorCount}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Loss of Sync Count</TableCell>
+                  <TableCell>{analysis.sasSspLog.port1.lossSyncCount}</TableCell>
+                  <TableCell>{analysis.sasSspLog.port2.lossSyncCount}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Phy Reset Problem Count</TableCell>
+                  <TableCell>{analysis.sasSspLog.port1.phyResetProblemCount}</TableCell>
+                  <TableCell>{analysis.sasSspLog.port2.phyResetProblemCount}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ),
+      },
+    ];
 
-    // Общая информация
-    output.push(
-      <table key="general-info">
-        <thead>
-          <tr>
-            <th>Параметр</th>
-            <th>Значение</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Вендор</td>
-            <td>{analysis.vendor}</td>
-          </tr>
-          <tr>
-            <td>Модель</td>
-            <td>{analysis.product}</td>
-          </tr>
-          <tr>
-            <td>Объем</td>
-            <td>{analysis.capacity}</td>
-          </tr>
-          <tr>
-            <td>Серийный номер</td>
-            <td>{analysis.serialNumber}</td>
-          </tr>
-          <tr>
-            <td>Скорость вращения</td>
-            <td>{analysis.rotationRate} RPM</td>
-          </tr>
-          <tr>
-            <td>Интерфейс</td>
-            <td>{`${analysis.interface} (${analysis.linkRate} Gbps)`}</td>
-          </tr>
-          <tr>
-            <td>Тип подключения</td>
-            <td>{analysis.connectionType}</td>
-          </tr>
-        </tbody>
-      </table>
-    );
-
-    // Здоровье диска
-    output.push(
-      <p key="health" className={analysis.health !== "OK" ? "error" : ""}>
-        <strong>Здоровье:</strong>{" "}
-        {analysis.health === "OK"
-          ? "Диск здоров."
-          : `Критическая проблема: диск не здоров (${analysis.health}).`}
-      </p>
-    );
-
-    // Температура
-    if (typeof analysis.temperature === "number") {
-      output.push(
-        <p key="temperature" className={analysis.temperature > 60 ? "warning" : ""}>
-          <strong>Температура:</strong>{" "}
-          {analysis.temperature > 60
-            ? `Высокая температура: ${analysis.temperature}°C.`
-            : `Нормальная температура: ${analysis.temperature}°C.`}
-        </p>
-      );
-    } else {
-      output.push(<p key="temperature">Температура: Неизвестно.</p>);
-    }
-
-    // Таблица Error counter log
-    output.push(
-      <div key="error-log">
-        <h3>Error counter log</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Операция</th>
-              <th>ECC Fast</th>
-              <th>Delayed</th>
-              <th>Rewrites</th>
-              <th>Гигабайты обработано</th>
-              <th>Некорректируемые ошибки</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Чтение</td>
-              <td>{analysis.readErrors.fast}</td>
-              <td>{analysis.readErrors.delayed}</td>
-              <td>{analysis.readErrors.rewrites}</td>
-              <td>{parseFloat(analysis.readErrors.gigabytesProcessed).toFixed(3)} GB</td>
-              <td>{analysis.readErrors.uncorrectedErrors}</td>
-            </tr>
-            <tr>
-              <td>Запись</td>
-              <td>{analysis.writeErrors.fast}</td>
-              <td>{analysis.writeErrors.delayed}</td>
-              <td>{analysis.writeErrors.rewrites}</td>
-              <td>{parseFloat(analysis.writeErrors.gigabytesProcessed).toFixed(3)} GB</td>
-              <td>{analysis.writeErrors.uncorrectedErrors}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    );
-
-    // Перераспределённые секторы
-    output.push(
-      <p key="reallocated-sectors">
-        <strong>Перераспределённые секторы:</strong>{" "}
-        {analysis.reallocatedSectors.inplace > 0 ||
-        analysis.reallocatedSectors.app > 0
-          ? `Через rewrite in-place: ${analysis.reallocatedSectors.inplace}, через reassignment by app: ${analysis.reallocatedSectors.app}.`
-          : "Отсутствуют."}
-      </p>
-    );
-
-    // Фоновое сканирование
-    output.push(
-      <table key="background-scan">
-        <thead>
-          <tr>
-            <th>Параметр</th>
-            <th>Значение</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Статус</td>
-            <td>{analysis.backgroundScan.status}</td>
-          </tr>
-          <tr>
-            <td>Накопленное время работы</td>
-            <td>{analysis.backgroundScan.powerOnTime} часов</td>
-          </tr>
-          <tr>
-            <td>Количество выполненных сканирований</td>
-            <td>{analysis.backgroundScan.scansPerformed}</td>
-          </tr>
-          <tr>
-            <td>Количество выполненных сканирований поверхности</td>
-            <td>{analysis.backgroundScan.mediumScansPerformed}</td>
-          </tr>
-          <tr>
-            <td>Прогресс последнего сканирования</td>
-            <td>{analysis.backgroundScan.scanProgress}%</td>
-          </tr>
-        </tbody>
-      </table>
-    );
-
-    // Журнал протокола SAS SSP
-    output.push(
-      <table key="sas-log">
-        <thead>
-          <tr>
-            <th>Параметр</th>
-            <th>Значение (Port 1)</th>
-            <th>Значение (Port 2)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Invalid DWORD Count</td>
-            <td>{analysis.sasSspLog.port1.invalidDwordCount}</td>
-            <td>{analysis.sasSspLog.port2.invalidDwordCount}</td>
-          </tr>
-          <tr>
-            <td>Disparity Error Count</td>
-            <td>{analysis.sasSspLog.port1.disparityErrorCount}</td>
-            <td>{analysis.sasSspLog.port2.disparityErrorCount}</td>
-          </tr>
-          <tr>
-            <td>Loss of Sync Count</td>
-            <td>{analysis.sasSspLog.port1.lossSyncCount}</td>
-            <td>{analysis.sasSspLog.port2.lossSyncCount}</td>
-          </tr>
-          <tr>
-            <td>Phy Reset Problem Count</td>
-            <td>{analysis.sasSspLog.port1.phyResetProblemCount}</td>
-            <td>{analysis.sasSspLog.port2.phyResetProblemCount}</td>
-          </tr>
-        </tbody>
-      </table>
-    );
-
-    return output;
+    return tabsContent;
   }
 
   // Обработка отправки формы
@@ -315,22 +350,38 @@ function App() {
   }
 
   return (
-    <div className="container">
-      <h1>Анализатор данных SMART</h1>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" align="center" gutterBottom>
+        Анализатор данных SMART
+      </Typography>
       <form onSubmit={handleSubmit}>
-        <textarea
+        <TextField
+          fullWidth
+          multiline
+          rows={10}
           value={smartData}
           onChange={(e) => setSmartData(e.target.value)}
-          rows="15"
-          cols="80"
           placeholder="Вставьте данные SMART здесь..."
+          sx={{ mb: 2 }}
         />
-        <br />
-        <button type="submit">Проанализировать</button>
+        <Button type="submit" variant="contained" color="primary">
+          Проанализировать
+        </Button>
       </form>
-      {error && <p className="error">{error}</p>}
-      {results && <div id="results">{results}</div>}
-    </div>
+      {error && <Alert severity="error">{error}</Alert>}
+      {results && (
+        <Box sx={{ mt: 2 }}>
+          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} aria-label="SMART tabs">
+            {results.map((tab, index) => (
+              <Tab key={index} label={tab.label} />
+            ))}
+          </Tabs>
+          <Box sx={{ pt: 2 }}>
+            {results[activeTab]?.content || <Typography>Нет данных.</Typography>}
+          </Box>
+        </Box>
+      )}
+    </Box>
   );
 }
 
