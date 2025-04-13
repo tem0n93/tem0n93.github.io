@@ -2,154 +2,14 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("smartForm").addEventListener("submit", function (event) {
         event.preventDefault(); // Предотвращаем отправку формы
         const smartData = document.getElementById("smartData").value.trim();
-        const tabsContainer = document.getElementById("tabs");
-        const tabContentContainers = document.querySelectorAll(".tab-content");
+        const resultsDiv = document.getElementById("results");
 
         try {
             if (!smartData) throw new Error("Пожалуйста, вставьте данные SMART.");
             const analysis = analyzeSmartData(smartData);
-            formatResultsWithTabs(analysis);
+            resultsDiv.innerHTML = formatResultsWithChart(analysis);
         } catch (error) {
-            alert(`Ошибка: ${error.message}`);
-        }
-
-        function formatResultsWithTabs(analysis) {
-            // Очистка содержимого вкладок
-            tabsContainer.innerHTML = "";
-            tabContentContainers.forEach((tab) => (tab.innerHTML = ""));
-
-            // Создание вкладок
-            const tabTitles = [
-                { id: "general-info", title: "Общая информация" },
-                { id: "disk-health", title: "Здоровье диска" },
-                { id: "error-log", title: "Ошибки чтения/записи" },
-                { id: "background-scan", title: "Фоновое сканирование" },
-                { id: "sas-log", title: "Журнал SAS SSP" },
-            ];
-
-            tabTitles.forEach(({ id, title }, index) => {
-                const tab = document.createElement("div");
-                tab.className = "tab";
-                tab.textContent = title;
-                tab.dataset.tab = id; // Добавляем атрибут data-tab
-                tab.onclick = () => switchTab(id); // Добавляем обработчик клика
-                tabsContainer.appendChild(tab);
-
-                if (index === 0) {
-                    tab.classList.add("active");
-                    document.getElementById(id).classList.add("active");
-                }
-            });
-
-            // Заполнение содержимого вкладок
-            document.getElementById("general-info").innerHTML = `
-                <div class="card">
-                    <h3>Общая информация</h3>
-                    <table>
-                        <tr><th>Параметр</th><th>Значение</th></tr>
-                        <tr><td>Вендор</td><td>${analysis.vendor}</td></tr>
-                        <tr><td>Модель</td><td>${analysis.product}</td></tr>
-                        <tr><td>Объем</td><td>${analysis.capacity}</td></tr>
-                        <tr><td>Серийный номер</td><td>${analysis.serialNumber}</td></tr>
-                        <tr><td>Скорость вращения</td><td>${analysis.rotationRate} RPM</td></tr>
-                        <tr><td>Интерфейс</td><td>${analysis.interface} (${analysis.linkRate} Gbps)</td></tr>
-                        <tr><td>Тип подключения</td><td>${analysis.connectionType}</td></tr>
-                    </table>
-                </div>
-            `;
-
-            document.getElementById("disk-health").innerHTML = `
-                <div class="card">
-                    <h3>Здоровье диска</h3>
-                    <p><strong>Статус:</strong> ${analysis.health === "OK" 
-                        ? `<span class="success">Диск здоров.</span>` 
-                        : `<span class="error">Критическая проблема: диск не здоров (${analysis.health}).</span>`}</p>
-                    <p><strong>Текущая температура:</strong> ${
-                        typeof analysis.temperature === "number" && analysis.temperature > 60 
-                            ? `<span class="warning">Высокая температура: ${analysis.temperature}°C.</span>` 
-                            : `Нормальная температура: ${analysis.temperature}°C.`}</p>
-                </div>
-            `;
-
-            document.getElementById("error-log").innerHTML = `
-                <div class="card">
-                    <h3>Error counter log</h3>
-                    <canvas id="errorChart" width="400" height="200"></canvas>
-                </div>
-            `;
-            drawErrorChart(analysis);
-
-            document.getElementById("background-scan").innerHTML = `
-                <div class="card">
-                    <h3>Фоновое сканирование</h3>
-                    <table>
-                        <tr><th>Параметр</th><th>Значение</th></tr>
-                        <tr><td>Статус</td><td>${analysis.backgroundScan.status}</td></tr>
-                        <tr><td>Накопленное время работы</td><td>${analysis.backgroundScan.powerOnTime} часов</td></tr>
-                        <tr><td>Количество выполненных сканирований</td><td>${analysis.backgroundScan.scansPerformed}</td></tr>
-                        <tr><td>Количество выполненных сканирований поверхности</td><td>${analysis.backgroundScan.mediumScansPerformed}</td></tr>
-                        <tr><td>Прогресс последнего сканирования</td><td>${analysis.backgroundScan.scanProgress}%</td></tr>
-                    </table>
-                </div>
-            `;
-
-            document.getElementById("sas-log").innerHTML = `
-                <div class="card">
-                    <h3>Журнал протокола SAS SSP</h3>
-                    <table>
-                        <tr><th>Параметр</th><th>Значение (Port 1)</th><th>Значение (Port 2)</th></tr>
-                        <tr><td>Invalid DWORD Count</td><td>${analysis.sasSspLog.port1.invalidDwordCount}</td><td>${analysis.sasSspLog.port2.invalidDwordCount}</td></tr>
-                        <tr><td>Disparity Error Count</td><td>${analysis.sasSspLog.port1.disparityErrorCount}</td><td>${analysis.sasSspLog.port2.disparityErrorCount}</td></tr>
-                        <tr><td>Loss of Sync Count</td><td>${analysis.sasSspLog.port1.lossSyncCount}</td><td>${analysis.sasSspLog.port2.lossSyncCount}</td></tr>
-                        <tr><td>Phy Reset Problem Count</td><td>${analysis.sasSspLog.port1.phyResetProblemCount}</td><td>${analysis.sasSspLog.port2.phyResetProblemCount}</td></tr>
-                    </table>
-                </div>
-            `;
-
-            // Переключение вкладок
-            function switchTab(tabId) {
-                const tabs = document.querySelectorAll(".tab");
-                const tabContents = document.querySelectorAll(".tab-content");
-
-                tabs.forEach((tab) => tab.classList.remove("active"));
-                tabContents.forEach((content) => content.classList.remove("active"));
-
-                document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add("active");
-                document.getElementById(tabId).classList.add("active");
-            }
-        }
-
-        // Рисование графика ошибок
-        function drawErrorChart(analysis) {
-            const ctx = document.getElementById("errorChart");
-            if (!ctx) return;
-
-            const chart = new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: ["ECC Fast", "Delayed", "Rewrites"],
-                    datasets: [
-                        {
-                            label: "Чтение",
-                            data: [analysis.readErrors.fast, analysis.readErrors.delayed, analysis.readErrors.rewrites],
-                            backgroundColor: "rgba(75, 192, 192, 0.6)",
-                        },
-                        {
-                            label: "Запись",
-                            data: [analysis.writeErrors.fast, analysis.writeErrors.delayed, analysis.writeErrors.rewrites],
-                            backgroundColor: "rgba(255, 99, 132, 0.6)",
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: "top",
-                        },
-                    },
-                },
-            });
+            resultsDiv.innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
         }
     });
 
@@ -228,6 +88,156 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         };
         return result;
+    }
+
+    // Форматирование результатов с графиками
+    function formatResultsWithChart(analysis) {
+        let output = "<h2>Результаты анализа:</h2>";
+
+        // Общая информация
+        output += `
+            <div class="card">
+                <h3>Общая информация</h3>
+                <table>
+                    <tr><th>Параметр</th><th>Значение</th></tr>
+                    <tr><td>Вендор</td><td>${analysis.vendor}</td></tr>
+                    <tr><td>Модель</td><td>${analysis.product}</td></tr>
+                    <tr><td>Объем</td><td>${analysis.capacity}</td></tr>
+                    <tr><td>Серийный номер</td><td>${analysis.serialNumber}</td></tr>
+                    <tr><td>Скорость вращения</td><td>${analysis.rotationRate} RPM</td></tr>
+                    <tr><td>Интерфейс</td><td>${analysis.interface} (${analysis.linkRate} Gbps)</td></tr>
+                    <tr><td>Тип подключения</td><td>${analysis.connectionType}</td></tr>
+                </table>
+            </div>
+        `;
+
+        // Здоровье диска
+        output += `
+            <div class="card">
+                <h3>Здоровье диска</h3>
+                <p><strong>Статус:</strong> ${analysis.health === "OK" 
+                    ? "Диск здоров." 
+                    : `<span class="error">Критическая проблема: диск не здоров (${analysis.health}).</span>`}</p>
+                <p><strong>Текущая температура:</strong> ${
+                    typeof analysis.temperature === "number" && analysis.temperature > 60 
+                        ? `<span class="warning">Высокая температура: ${analysis.temperature}°C.</span>` 
+                        : `Нормальная температура: ${analysis.temperature}°C.`}</p>
+            </div>
+        `;
+
+        // Error counter log (текстовая версия + график)
+        output += `
+            <div class="card">
+                <h3>Ошибки чтения/записи</h3>
+                <!-- Таблица -->
+                <table>
+                    <tr>
+                        <th>Операция</th>
+                        <th>ECC Fast</th>
+                        <th>Delayed</th>
+                        <th>Rewrites</th>
+                        <th>Гигабайты обработано</th>
+                        <th>Некорректируемые ошибки</th>
+                    </tr>
+                    <tr>
+                        <td>Чтение</td>
+                        <td>${analysis.readErrors.fast}</td>
+                        <td>${analysis.readErrors.delayed}</td>
+                        <td>${analysis.readErrors.rewrites}</td>
+                        <td>${parseFloat(analysis.readErrors.gigabytesProcessed).toFixed(3)} GB</td>
+                        <td>${analysis.readErrors.uncorrectedErrors}</td>
+                    </tr>
+                    <tr>
+                        <td>Запись</td>
+                        <td>${analysis.writeErrors.fast}</td>
+                        <td>${analysis.writeErrors.delayed}</td>
+                        <td>${analysis.writeErrors.rewrites}</td>
+                        <td>${parseFloat(analysis.writeErrors.gigabytesProcessed).toFixed(3)} GB</td>
+                        <td>${analysis.writeErrors.uncorrectedErrors}</td>
+                    </tr>
+                </table>
+                <!-- График -->
+                <div class="chart-container">
+                    <canvas id="errorChart"></canvas>
+                </div>
+            </div>
+        `;
+
+        drawErrorChart(analysis);
+
+        // Перераспределённые секторы
+        output += `
+            <div class="card">
+                <h3>Перераспределённые секторы</h3>
+                <p>${analysis.reallocatedSectors.inplace > 0 || analysis.reallocatedSectors.app > 0 
+                    ? `<span class="warning">Через rewrite in-place: ${analysis.reallocatedSectors.inplace}, через reassignment by app: ${analysis.reallocatedSectors.app}.</span>` 
+                    : `<span class="success">Отсутствуют.</span>`}</p>
+            </div>
+        `;
+
+        // Фоновое сканирование
+        output += `
+            <div class="card">
+                <h3>Фоновое сканирование</h3>
+                <table>
+                    <tr><th>Параметр</th><th>Значение</th></tr>
+                    <tr><td>Статус</td><td>${analysis.backgroundScan.status}</td></tr>
+                    <tr><td>Накопленное время работы</td><td>${analysis.backgroundScan.powerOnTime} часов</td></tr>
+                    <tr><td>Количество выполненных сканирований</td><td>${analysis.backgroundScan.scansPerformed}</td></tr>
+                    <tr><td>Количество выполненных сканирований поверхности</td><td>${analysis.backgroundScan.mediumScansPerformed}</td></tr>
+                    <tr><td>Прогресс последнего сканирования</td><td>${analysis.backgroundScan.scanProgress}%</td></tr>
+                </table>
+            </div>
+        `;
+
+        // Журнал SAS SSP
+        output += `
+            <div class="card">
+                <h3>Журнал протокола SAS SSP</h3>
+                <table>
+                    <tr><th>Параметр</th><th>Значение (Port 1)</th><th>Значение (Port 2)</th></tr>
+                    <tr><td>Invalid DWORD Count</td><td>${analysis.sasSspLog.port1.invalidDwordCount}</td><td>${analysis.sasSspLog.port2.invalidDwordCount}</td></tr>
+                    <tr><td>Disparity Error Count</td><td>${analysis.sasSspLog.port1.disparityErrorCount}</td><td>${analysis.sasSspLog.port2.disparityErrorCount}</td></tr>
+                    <tr><td>Loss of Sync Count</td><td>${analysis.sasSspLog.port1.lossSyncCount}</td><td>${analysis.sasSspLog.port2.lossSyncCount}</td></tr>
+                    <tr><td>Phy Reset Problem Count</td><td>${analysis.sasSspLog.port1.phyResetProblemCount}</td><td>${analysis.sasSspLog.port2.phyResetProblemCount}</td></tr>
+                </table>
+            </div>
+        `;
+
+        return output;
+    }
+
+    // Рисование графика ошибок
+    function drawErrorChart(analysis) {
+        const ctx = document.getElementById("errorChart");
+        if (!ctx) return;
+
+        const chart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: ["ECC Fast", "Delayed", "Rewrites"],
+                datasets: [
+                    {
+                        label: "Чтение",
+                        data: [analysis.readErrors.fast, analysis.readErrors.delayed, analysis.readErrors.rewrites],
+                        backgroundColor: "rgba(75, 192, 192, 0.6)",
+                    },
+                    {
+                        label: "Запись",
+                        data: [analysis.writeErrors.fast, analysis.writeErrors.delayed, analysis.writeErrors.rewrites],
+                        backgroundColor: "rgba(255, 99, 132, 0.6)",
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: "top",
+                    },
+                },
+            },
+        });
     }
 
     // Вспомогательные функции
