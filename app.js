@@ -1,36 +1,14 @@
-document.addEventListener("DOMContentLoaded", function () {
-    // Обработчик формы
-    const smartForm = document.getElementById("smartForm");
-    if (!smartForm) {
-        console.error("Элемент с ID 'smartForm' не найден.");
-        return;
-    }
+import React, { useState } from "react";
+import "./App.css"; // Подключение стилей
 
-    smartForm.addEventListener("submit", function (event) {
-        event.preventDefault(); // Предотвращаем отправку формы
+function App() {
+  const [smartData, setSmartData] = useState(""); // Данные SMART из текстового поля
+  const [results, setResults] = useState(null); // Результаты анализа
+  const [error, setError] = useState(null); // Ошибки анализа
 
-        const smartData = document.getElementById("smartData")?.value?.trim();
-        const resultsDiv = document.getElementById("results");
-
-        if (!resultsDiv) {
-            console.error("Элемент с ID 'results' не найден.");
-            return;
-        }
-
-        try {
-            if (!smartData) throw new Error("Пожалуйста, вставьте данные SMART.");
-            const analysis = analyzeSmartData(smartData);
-            resultsDiv.innerHTML = formatResults(analysis);
-        } catch (error) {
-            resultsDiv.innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
-        }
-    });
-});
-
-// Функция анализа данных SMART
-function analyzeSmartData(data) {
+  // Функция анализа данных SMART
+  function analyzeSmartData(data) {
     const result = {};
-
     // Общая информация
     result.vendor = extractValue(data, /Vendor:\s+(.+)$/m) || "Неизвестно";
     result.product = extractValue(data, /Product:\s+(.+)$/m) || "Неизвестно";
@@ -50,9 +28,6 @@ function analyzeSmartData(data) {
     result.interface = extractValue(data, /Transport protocol:\s+(.+)\s+\(.*\)/) || "Неизвестно";
     result.linkRate = extractValue(data, /negotiated logical link rate: phy enabled;\s+(\d+)\s+Gbps/) || "Неизвестно";
 
-    // Тип подключения
-    result.connectionType = extractValue(data, /attached device type:\s+(.+)$/m) || "Неизвестно";
-
     // Циклы включения/выключения
     result.startStopCyclesSpecified = extractValue(data, /Specified cycle count over device lifetime:\s+(\d+)/) || "Неизвестно";
     result.startStopCyclesActual = extractValue(data, /Accumulated start-stop cycles:\s+(\d+)/) || "Неизвестно";
@@ -64,208 +39,299 @@ function analyzeSmartData(data) {
     // Ошибки чтения/записи
     const readErrorsMatch = data.match(/read:\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+([\d.]+)/);
     result.readErrors = readErrorsMatch
-        ? {
-              fast: parseInt(readErrorsMatch[1], 10),
-              delayed: parseInt(readErrorsMatch[2], 10),
-              rewrites: parseInt(readErrorsMatch[3], 10),
-              gigabytesProcessed: parseFloat(readErrorsMatch[4]),
-              uncorrectedErrors: extractValue(data, /read:.+?\s+(\d+)$/m)
-          }
-        : { fast: 0, delayed: 0, rewrites: 0, gigabytesProcessed: 0, uncorrectedErrors: 0 };
+      ? {
+          fast: parseInt(readErrorsMatch[1], 10),
+          delayed: parseInt(readErrorsMatch[2], 10),
+          rewrites: parseInt(readErrorsMatch[3], 10),
+          gigabytesProcessed: parseFloat(readErrorsMatch[4]),
+          uncorrectedErrors: extractValue(data, /read:.+?\s+(\d+)$/m),
+        }
+      : { fast: 0, delayed: 0, rewrites: 0, gigabytesProcessed: 0, uncorrectedErrors: 0 };
 
     const writeErrorsMatch = data.match(/write:\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+([\d.]+)/);
     result.writeErrors = writeErrorsMatch
-        ? {
-              fast: parseInt(writeErrorsMatch[1], 10),
-              delayed: parseInt(writeErrorsMatch[2], 10),
-              rewrites: parseInt(writeErrorsMatch[3], 10),
-              gigabytesProcessed: parseFloat(writeErrorsMatch[4]),
-              uncorrectedErrors: extractValue(data, /write:.+?\s+(\d+)$/m)
-          }
-        : { fast: 0, delayed: 0, rewrites: 0, gigabytesProcessed: 0, uncorrectedErrors: 0 };
+      ? {
+          fast: parseInt(writeErrorsMatch[1], 10),
+          delayed: parseInt(writeErrorsMatch[2], 10),
+          rewrites: parseInt(writeErrorsMatch[3], 10),
+          gigabytesProcessed: parseFloat(writeErrorsMatch[4]),
+          uncorrectedErrors: extractValue(data, /write:.+?\s+(\d+)$/m),
+        }
+      : { fast: 0, delayed: 0, rewrites: 0, gigabytesProcessed: 0, uncorrectedErrors: 0 };
 
     // Перераспределённые секторы
     result.reallocatedSectors = {
-        inplace: countOccurrences(data, /Recovered via rewrite in-place/) || 0,
-        app: countOccurrences(data, /Reassigned by app/) || 0
+      inplace: countOccurrences(data, /Recovered via rewrite in-place/),
+      app: countOccurrences(data, /Reassigned by app/),
     };
 
     // Результаты фонового сканирования
     result.backgroundScan = {
-        status: extractValue(data, /Status:\s+(.+)$/m) || "Неизвестно",
-        powerOnTime: extractValue(data, /Accumulated power on time,\s+hours:minutes\s+(\d+):(\d+)/) || "Неизвестно",
-        scansPerformed: extractValue(data, /Number of background scans performed:\s+(\d+)/) || "Неизвестно",
-        mediumScansPerformed: extractValue(data, /Number of background medium scans performed:\s+(\d+)/) || "Неизвестно",
-        scanProgress: extractValue(data, /scan progress:\s+(\d+.\d+)%/) || "Неизвестно"
+      status: extractValue(data, /Status:\s+(.+)$/m) || "Неизвестно",
+      powerOnTime: extractValue(data, /Accumulated power on time,\s+hours:minutes\s+(\d+):(\d+)/) || "Неизвестно",
+      scansPerformed: extractValue(data, /Number of background scans performed:\s+(\d+)/) || "Неизвестно",
+      mediumScansPerformed: extractValue(data, /Number of background medium scans performed:\s+(\d+)/) || "Неизвестно",
+      scanProgress: extractValue(data, /scan progress:\s+(\d+.\d+)%/) || "Неизвестно",
     };
 
     // Журнал протокола SAS SSP
     result.sasSspLog = {
-        port1: {
-            invalidDwordCount: extractValue(data, /relative target port id = 1.*?Invalid DWORD count = (\d+)/ms) || 0,
-            disparityErrorCount: extractValue(data, /relative target port id = 1.*?Running disparity error count = (\d+)/ms) || 0,
-            lossSyncCount: extractValue(data, /relative target port id = 1.*?Loss of DWORD synchronization = (\d+)/ms) || 0,
-            phyResetProblemCount: extractValue(data, /relative target port id = 1.*?Phy reset problem = (\d+)/ms) || 0
-        },
-        port2: {
-            invalidDwordCount: extractValue(data, /relative target port id = 2.*?Invalid DWORD count = (\d+)/ms) || 0,
-            disparityErrorCount: extractValue(data, /relative target port id = 2.*?Running disparity error count = (\d+)/ms) || 0,
-            lossSyncCount: extractValue(data, /relative target port id = 2.*?Loss of DWORD synchronization = (\d+)/ms) || 0,
-            phyResetProblemCount: extractValue(data, /relative target port id = 2.*?Phy reset problem = (\d+)/ms) || 0
-        }
+      port1: {
+        invalidDwordCount: extractValue(data, /relative target port id = 1.*?Invalid DWORD count = (\d+)/ms) || 0,
+        disparityErrorCount: extractValue(data, /relative target port id = 1.*?Running disparity error count = (\d+)/ms) || 0,
+        lossSyncCount: extractValue(data, /relative target port id = 1.*?Loss of DWORD synchronization = (\d+)/ms) || 0,
+        phyResetProblemCount: extractValue(data, /relative target port id = 1.*?Phy reset problem = (\d+)/ms) || 0,
+      },
+      port2: {
+        invalidDwordCount: extractValue(data, /relative target port id = 2.*?Invalid DWORD count = (\d+)/ms) || 0,
+        disparityErrorCount: extractValue(data, /relative target port id = 2.*?Running disparity error count = (\d+)/ms) || 0,
+        lossSyncCount: extractValue(data, /relative target port id = 2.*?Loss of DWORD synchronization = (\d+)/ms) || 0,
+        phyResetProblemCount: extractValue(data, /relative target port id = 2.*?Phy reset problem = (\d+)/ms) || 0,
+      },
     };
 
     return result;
-}
+  }
 
-// Форматирование результатов
-function formatResults(analysis) {
-    let output = "<h2>Результаты анализа:</h2>";
+  // Форматирование результатов
+  function formatResults(analysis) {
+    let output = [];
 
     // Общая информация
-    output += `
-        <table>
-            <tr><th>Параметр</th><th>Значение</th></tr>
-            <tr><td>Вендор</td><td>${analysis.vendor}</td></tr>
-            <tr><td>Модель</td><td>${analysis.product}</td></tr>
-            <tr><td>Объем</td><td>${analysis.capacity}</td></tr>
-            <tr><td>Серийный номер</td><td>${analysis.serialNumber}</td></tr>
-            <tr><td>Скорость вращения</td><td>${analysis.rotationRate} RPM</td></tr>
-            <tr><td>Интерфейс</td><td>${analysis.interface} (${analysis.linkRate} Gbps)</td></tr>
-            <tr><td>Тип подключения</td><td>${analysis.connectionType}</td></tr>
-        </table>
-    `;
+    output.push(
+      <table key="general-info">
+        <thead>
+          <tr>
+            <th>Параметр</th>
+            <th>Значение</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Вендор</td>
+            <td>{analysis.vendor}</td>
+          </tr>
+          <tr>
+            <td>Модель</td>
+            <td>{analysis.product}</td>
+          </tr>
+          <tr>
+            <td>Объем</td>
+            <td>{analysis.capacity}</td>
+          </tr>
+          <tr>
+            <td>Серийный номер</td>
+            <td>{analysis.serialNumber}</td>
+          </tr>
+          <tr>
+            <td>Скорость вращения</td>
+            <td>{analysis.rotationRate} RPM</td>
+          </tr>
+          <tr>
+            <td>Интерфейс</td>
+            <td>{`${analysis.interface} (${analysis.linkRate} Gbps)`}</td>
+          </tr>
+          <tr>
+            <td>Тип подключения</td>
+            <td>{analysis.connectionType}</td>
+          </tr>
+        </tbody>
+      </table>
+    );
 
     // Здоровье диска
-    output += `
-        <p><strong>Здоровье:</strong> ${analysis.health === "OK" 
-            ? "Диск здоров." 
-            : `<span class="error">Критическая проблема: диск не здоров (${analysis.health}).</span>`}</p>
-    `;
+    output.push(
+      <p key="health" className={analysis.health !== "OK" ? "error" : ""}>
+        <strong>Здоровье:</strong>{" "}
+        {analysis.health === "OK"
+          ? "Диск здоров."
+          : `Критическая проблема: диск не здоров (${analysis.health}).`}
+      </p>
+    );
 
     // Температура
     if (typeof analysis.temperature === "number") {
-        if (analysis.temperature > 60) {
-            output += `<p><strong>Температура:</strong> <span class="warning">Высокая температура: ${analysis.temperature}°C.</span></p>`;
-        } else {
-            output += `<p><strong>Температура:</strong> Нормальная температура: ${analysis.temperature}°C.</p>`;
-        }
+      output.push(
+        <p key="temperature" className={analysis.temperature > 60 ? "warning" : ""}>
+          <strong>Температура:</strong>{" "}
+          {analysis.temperature > 60
+            ? `Высокая температура: ${analysis.temperature}°C.`
+            : `Нормальная температура: ${analysis.temperature}°C.`}
+        </p>
+      );
     } else {
-        output += `<p><strong>Температура:</strong> Неизвестно.</p>`;
+      output.push(<p key="temperature">Температура: Неизвестно.</p>);
     }
-
-    // Циклы включения/выключения
-    output += `
-        <p><strong>Циклы включения/выключения:</strong> Заданный лимит: ${
-            analysis.startStopCyclesSpecified || "Неизвестно"
-        }, Актуальное значение: ${analysis.startStopCyclesActual || "Неизвестно"}</p>
-    `;
-
-    // Циклы загрузки/разгрузки головок
-    output += `
-        <p><strong>Циклы загрузки/разгрузки головок:</strong> Заданный лимит: ${
-            analysis.loadUnloadCyclesSpecified || "Неизвестно"
-        }, Актуальное значение: ${analysis.loadUnloadCyclesActual || "Неизвестно"}</p>
-    `;
 
     // Таблица Error counter log
-    output += `<h3>Error counter log</h3>`;
-    output += `
+    output.push(
+      <div key="error-log">
+        <h3>Error counter log</h3>
         <table>
+          <thead>
             <tr>
-                <th>Операция</th>
-                <th>ECC Fast</th>
-                <th>Delayed</th>
-                <th>Rewrites</th>
-                <th>Гигабайты обработано</th>
-                <th>Некорректируемые ошибки</th>
+              <th>Операция</th>
+              <th>ECC Fast</th>
+              <th>Delayed</th>
+              <th>Rewrites</th>
+              <th>Гигабайты обработано</th>
+              <th>Некорректируемые ошибки</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Чтение</td>
+              <td>{analysis.readErrors.fast}</td>
+              <td>{analysis.readErrors.delayed}</td>
+              <td>{analysis.readErrors.rewrites}</td>
+              <td>{parseFloat(analysis.readErrors.gigabytesProcessed).toFixed(3)} GB</td>
+              <td>{analysis.readErrors.uncorrectedErrors}</td>
             </tr>
             <tr>
-                <td>Чтение</td>
-                <td>${analysis.readErrors.fast}</td>
-                <td>${analysis.readErrors.delayed}</td>
-                <td>${analysis.readErrors.rewrites}</td>
-                <td>${parseFloat(analysis.readErrors.gigabytesProcessed).toFixed(3)} GB</td>
-                <td>${analysis.readErrors.uncorrectedErrors}</td>
+              <td>Запись</td>
+              <td>{analysis.writeErrors.fast}</td>
+              <td>{analysis.writeErrors.delayed}</td>
+              <td>{analysis.writeErrors.rewrites}</td>
+              <td>{parseFloat(analysis.writeErrors.gigabytesProcessed).toFixed(3)} GB</td>
+              <td>{analysis.writeErrors.uncorrectedErrors}</td>
             </tr>
-            <tr>
-                <td>Запись</td>
-                <td>${analysis.writeErrors.fast}</td>
-                <td>${analysis.writeErrors.delayed}</td>
-                <td>${analysis.writeErrors.rewrites}</td>
-                <td>${parseFloat(analysis.writeErrors.gigabytesProcessed).toFixed(3)} GB</td>
-                <td>${analysis.writeErrors.uncorrectedErrors}</td>
-            </tr>
+          </tbody>
         </table>
-    `;
+      </div>
+    );
 
     // Перераспределённые секторы
-    if (analysis.reallocatedSectors.inplace > 0 || analysis.reallocatedSectors.app > 0) {
-        output += `
-            <p><strong>Перераспределённые секторы:</strong> Через rewrite in-place: ${
-                analysis.reallocatedSectors.inplace
-            }, через reassignment by app: ${analysis.reallocatedSectors.app}.</p>
-        `;
-    } else {
-        output += `<p><strong>Перераспределённые секторы:</strong> Отсутствуют.</p>`;
-    }
+    output.push(
+      <p key="reallocated-sectors">
+        <strong>Перераспределённые секторы:</strong>{" "}
+        {analysis.reallocatedSectors.inplace > 0 ||
+        analysis.reallocatedSectors.app > 0
+          ? `Через rewrite in-place: ${analysis.reallocatedSectors.inplace}, через reassignment by app: ${analysis.reallocatedSectors.app}.`
+          : "Отсутствуют."}
+      </p>
+    );
 
-    // Результаты фонового сканирования
-    output += `<h3>Фоновое сканирование</h3>`;
-    output += `
-        <table>
-            <tr><th>Параметр</th><th>Значение</th></tr>
-            <tr><td>Статус</td><td>${analysis.backgroundScan.status || "Неизвестно"}</td></tr>
-            <tr><td>Накопленное время работы</td><td>${
-                analysis.backgroundScan.powerOnTime || "Неизвестно"
-            } часов</td></tr>
-            <tr><td>Количество выполненных сканирований</td><td>${
-                analysis.backgroundScan.scansPerformed || "Неизвестно"
-            }</td></tr>
-            <tr><td>Количество выполненных сканирований поверхности</td><td>${
-                analysis.backgroundScan.mediumScansPerformed || "Неизвестно"
-            }</td></tr>
-            <tr><td>Прогресс последнего сканирования</td><td>${
-                analysis.backgroundScan.scanProgress || "Неизвестно"
-            }%</td></tr>
-        </table>
-    `;
+    // Фоновое сканирование
+    output.push(
+      <table key="background-scan">
+        <thead>
+          <tr>
+            <th>Параметр</th>
+            <th>Значение</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Статус</td>
+            <td>{analysis.backgroundScan.status}</td>
+          </tr>
+          <tr>
+            <td>Накопленное время работы</td>
+            <td>{analysis.backgroundScan.powerOnTime} часов</td>
+          </tr>
+          <tr>
+            <td>Количество выполненных сканирований</td>
+            <td>{analysis.backgroundScan.scansPerformed}</td>
+          </tr>
+          <tr>
+            <td>Количество выполненных сканирований поверхности</td>
+            <td>{analysis.backgroundScan.mediumScansPerformed}</td>
+          </tr>
+          <tr>
+            <td>Прогресс последнего сканирования</td>
+            <td>{analysis.backgroundScan.scanProgress}%</td>
+          </tr>
+        </tbody>
+      </table>
+    );
 
     // Журнал протокола SAS SSP
-    output += `<h3>Журнал протокола SAS SSP</h3>`;
-    output += `
-        <table>
-            <tr><th>Параметр</th><th>Значение (Port 1)</th><th>Значение (Port 2)</th></tr>
-            <tr><td>Invalid DWORD Count</td><td>${
-                analysis.sasSspLog.port1.invalidDwordCount
-            }</td><td>${analysis.sasSspLog.port2.invalidDwordCount}</td></tr>
-            <tr><td>Disparity Error Count</td><td>${
-                analysis.sasSspLog.port1.disparityErrorCount
-            }</td><td>${analysis.sasSspLog.port2.disparityErrorCount}</td></tr>
-            <tr><td>Loss of Sync Count</td><td>${
-                analysis.sasSspLog.port1.lossSyncCount
-            }</td><td>${analysis.sasSspLog.port2.lossSyncCount}</td></tr>
-            <tr><td>Phy Reset Problem Count</td><td>${
-                analysis.sasSspLog.port1.phyResetProblemCount
-            }</td><td>${analysis.sasSspLog.port2.phyResetProblemCount}</td></tr>
-        </table>
-    `;
+    output.push(
+      <table key="sas-log">
+        <thead>
+          <tr>
+            <th>Параметр</th>
+            <th>Значение (Port 1)</th>
+            <th>Значение (Port 2)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Invalid DWORD Count</td>
+            <td>{analysis.sasSspLog.port1.invalidDwordCount}</td>
+            <td>{analysis.sasSspLog.port2.invalidDwordCount}</td>
+          </tr>
+          <tr>
+            <td>Disparity Error Count</td>
+            <td>{analysis.sasSspLog.port1.disparityErrorCount}</td>
+            <td>{analysis.sasSspLog.port2.disparityErrorCount}</td>
+          </tr>
+          <tr>
+            <td>Loss of Sync Count</td>
+            <td>{analysis.sasSspLog.port1.lossSyncCount}</td>
+            <td>{analysis.sasSspLog.port2.lossSyncCount}</td>
+          </tr>
+          <tr>
+            <td>Phy Reset Problem Count</td>
+            <td>{analysis.sasSspLog.port1.phyResetProblemCount}</td>
+            <td>{analysis.sasSspLog.port2.phyResetProblemCount}</td>
+          </tr>
+        </tbody>
+      </table>
+    );
 
     return output;
-}
+  }
 
-// Вспомогательные функции
-function extractValue(data, regex, port = 1) {
-    const matches = data.split("relative target port id = ").map(section => section.match(regex));
+  // Обработка отправки формы
+  function handleSubmit(event) {
+    event.preventDefault();
+    setError(null);
+
+    try {
+      if (!smartData.trim()) throw new Error("Пожалуйста, вставьте данные SMART.");
+      const analysis = analyzeSmartData(smartData);
+      setResults(formatResults(analysis));
+    } catch (err) {
+      setError(err.message);
+      setResults(null);
+    }
+  }
+
+  // Вспомогательные функции
+  function extractValue(data, regex, port = 1) {
+    const matches = data.split("relative target port id = ").map((section) => section.match(regex));
     return matches[port - 1]?.[1].trim() || null;
-}
+  }
 
-function convertCapacity(capacityStr) {
+  function convertCapacity(capacityStr) {
     if (!capacityStr) return "Неизвестно";
     const match = capacityStr.match(/(\d+\.\d+)\s*TB/);
     return match ? `${parseFloat(match[1]).toFixed(1)} TB` : "Неизвестно";
+  }
+
+  function countOccurrences(data, regex) {
+    return (data.match(regex) || []).length;
+  }
+
+  return (
+    <div className="container">
+      <h1>Анализатор данных SMART</h1>
+      <form onSubmit={handleSubmit}>
+        <textarea
+          value={smartData}
+          onChange={(e) => setSmartData(e.target.value)}
+          rows="15"
+          cols="80"
+          placeholder="Вставьте данные SMART здесь..."
+        />
+        <br />
+        <button type="submit">Проанализировать</button>
+      </form>
+      {error && <p className="error">{error}</p>}
+      {results && <div id="results">{results}</div>}
+    </div>
+  );
 }
 
-function countOccurrences(data, regex) {
-    return (data.match(regex) || []).length;
-}
+export default App;
